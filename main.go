@@ -60,15 +60,16 @@ func main() {
 			}
 		}()
 	}
-
+	var wg2 sync.WaitGroup
+	wg2.Add(1)
 	var states models.ListTfStates
-
 	go func() {
 		for {
 			select {
 			case state := <-stateChan:
 				states = append(states, state)
 			case <-done:
+				defer wg2.Done()
 				close(stateChan)
 				if config.Empty {
 					states = states.Empty()
@@ -84,7 +85,7 @@ func main() {
 
 	wg.Wait()
 	done <- true
-
+	wg2.Wait()
 }
 
 func TableWriter(data []*models.TfState) {
